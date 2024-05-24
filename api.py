@@ -77,5 +77,24 @@ def add_itstudent():
     cur.close()
     return make_response(jsonify({"Message": "Student added successfully", "rows_affected": rows_affected}), 201)
 
+@app.route("/itstudent/<int:id>", methods=["PUT"])
+def update_itstudent(id):
+    cur = mysql.connection.cursor()
+    info = request.get_json()
+    fullname = info ["fullname"]
+    address = info ["address"]
+    yearandblock = info ["yearandblock"]
+    units = info ["units"]
+    cur.execute(
+        """ UPDATE itstudent SET fullname =%s, address = %s, yearandblock =%s, units = %s WHERE studentnumber =%s """, 
+        (fullname, address, yearandblock, units, id),
+    )
+    mysql.connection.commit()
+    rows_affected = cur.rowcount
+    cur.close()
+
+
+    return make_response(jsonify({"Message": "itstudent added successfully", "rows_affected": rows_affected}), 201)
+
 if __name__ == "__main__":
     app.run(debug=True) 
