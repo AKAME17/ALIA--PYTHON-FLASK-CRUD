@@ -37,9 +37,27 @@ def data_fetch(query):
 
 
 @app.route("/itstudent", methods=["GET"])
-def get_actors():
+def get_itstudent():
     data = data_fetch("""select * from itstudent""")
     return make_response(jsonify(data), 200)
+
+@app.route("/itstudent/<int:id>", methods=["GET"])
+def get_itstudent_by_(id):
+    data = data_fetch("""select * from itstudent where studentnumber = {}""".format(id))
+    return make_response(jsonify(data), 200)
+
+@app.route("/itstudent/<int:id>/courses", methods=["GET"])
+def get_course_by_itstudent (id):
+    data = data_fetch("""
+SELECT course_name.courseid, course_name.coursename 
+FROM itstudent
+INNER JOIN course_enrollees
+ON itstudent.studentnumber = course_enrollees.studentnumber
+INNER JOIN course_name
+ON course_enrollees.courseid = course_name.courseid
+where itstudent.studentnumber = {}""".format(id))
+    return make_response(jsonify({"Student number": id, "count": len(data), "courses": data}), 200)
+
 
 if __name__ == "__main__":
     app.run(debug=True) 
