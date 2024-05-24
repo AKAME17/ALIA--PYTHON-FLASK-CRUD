@@ -12,8 +12,10 @@
 
 from flask import Flask, make_response, jsonify, request
 from flask_mysqldb import MySQL
+from flask_httpauth import HTTPBasicAuth
 
 app = Flask(__name__)
+auth = HTTPBasicAuth()
 app.config["MYSQL_HOST"] = "localhost"
 app.config["MYSQL_USER"] = "root"
 app.config["MYSQL_PASSWORD"] = "root"
@@ -22,6 +24,17 @@ app.config["MYSQL_DB"] = "sitedata"
 app.config["MYSQL_CURSORCLASS"] = "DictCursor"
 
 mysql = MySQL(app)
+
+@auth.verify_password
+def security(username, password):
+    return username == "NelyzaAlia"
+    return password == "IPT123"
+
+@app.route("/security")
+@auth.login_required
+def security_measure():
+    return jsonify({"message": "you are authorized to acces this API applocation "})
+
 
 @app.route("/")
 def hello_world():
@@ -49,16 +62,16 @@ def get_itstudent_by_(id):
 @app.route("/itstudent/<int:id>/courses", methods=["GET"])
 def get_course_by_itstudent (id):
     data = data_fetch("""
-SELECT course_name.courseid, course_name.coursename 
+SELECT courses_name.courseid, courses_name.coursename 
 FROM itstudent
-INNER JOIN course_enrollees
-ON itstudent.studentnumber = course_enrollees.studentnumber
-INNER JOIN course_name
-ON course_enrollees.courseid = course_name.courseid
+INNER JOIN course_enrolled
+ON itstudent.studentnumber = course_enrolled.studentnumber
+INNER JOIN courses_name
+ON course_enrolled.course_id = courses_name.courseid
 where itstudent.studentnumber = {}""".format(id))
     return make_response(jsonify({"Student number": id, "count": len(data), "courses": data}), 200)
 
-@app.route("/itstudent", methods=["POST"])
+@app.route("/itstudent", methods=["POST"]) 
 def add_itstudent():
     cur = mysql.connection.cursor()
     info = request.get_json()
@@ -86,7 +99,7 @@ def update_itstudent(id):
     yearandblock = info ["yearandblock"]
     units = info ["units"]
     cur.execute(
-        """ UPDATE itstudent SET fullname =%s, address = %s, yearandblock =%s, units = %s WHERE studentnumber =%s """, 
+        """ UPDATE itstudent SET fullname =%s, address =  %s, yearandblock =%s, units = %s WHERE studentnumber =%s """, 
         (fullname, address, yearandblock, units, id),
     )
     mysql.connection.commit()
@@ -104,7 +117,12 @@ def delete_itstudent(id):
     mysql.connection.commit()
     rows_affected = cur.rowcount
     cur.close()
-    return make_response(jsonify({"message": "actor deleted successfully", "rows_affected": rows_affected}), 200)
-    
+    return make_response(jsonify({"message": "student deleted successfully", "rows_affected": rows_affected}), 200)
+
+@app.route("/itstudent/format", methods= ["GET"])
+def get_params():
+    fmt = request.args.get('id')
+    foo = request.args.get('bbbb')
+    return make_response(jsonify({"format": fmt}))
 if __name__ == "__main__":
     app.run(debug=True) 
