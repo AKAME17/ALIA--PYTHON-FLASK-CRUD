@@ -9,7 +9,6 @@
 # if __name__== "__main__":
 #     app.run(debug= True)  
 
-
 from flask import Flask, make_response, jsonify, request
 from flask_mysqldb import MySQL
 from flask_httpauth import HTTPBasicAuth
@@ -49,15 +48,42 @@ def data_fetch(query):
     return data
 
 
+def dict_to_xml(data):
+    xml = ['<root>']
+    for item in data:
+        xml.append('<item>')
+        for key, value in item.items():
+            xml.append(f'<{key}>{value}</{key}>')
+        xml.append('</item>')
+    xml.append('</root>')
+    return ''.join(xml)
+
+
+def output_format(data, format):
+    if format == 'xml':
+        xml_data = dict_to_xml(data)
+        response = make_response(xml_data, 200)
+        response.headers["Content-Type"] = "application/xml"
+    else:  # Default to JSON
+        response = make_response(jsonify(data), 200)
+        response.headers["Content-Type"] = "application/json"
+    return response
+
+
 @app.route("/itstudent", methods=["GET"])
 def get_itstudent():
+    format = request.args.get('format', 'json')
     data = data_fetch("""select * from itstudent""")
-    return make_response(jsonify(data), 200)
+    return output_format(data, format)
+
 
 @app.route("/itstudent/<int:id>", methods=["GET"])
 def get_itstudent_by_(id):
+    format = request.args.get('format', 'json')
     data = data_fetch("""select * from itstudent where studentnumber = {}""".format(id))
-    return make_response(jsonify(data), 200)
+    return output_format(data, format)
+
+
 
 @app.route("/itstudent/<int:id>/courses", methods=["GET"])
 def get_course_by_itstudent (id):
@@ -70,6 +96,7 @@ INNER JOIN courses_name
 ON course_enrolled.course_id = courses_name.courseid
 where itstudent.studentnumber = {}""".format(id))
     return make_response(jsonify({"Student number": id, "count": len(data), "courses": data}), 200)
+
 
 @app.route("/itstudent", methods=["POST"]) 
 def add_itstudent():
@@ -84,11 +111,14 @@ def add_itstudent():
         """ INSERT INTO itstudent (fullname, studentnumber, address, yearandblock, units) VALUE (%s, %s, %s, %s, %s)""", 
         (fullname, studentnumber, address, yearandblock, units),
     )
+
+
     mysql.connection.commit()
     print("Row(s) affected: {}".format(cur.rowcount))
     rows_affected = cur.rowcount
     cur.close()
     return make_response(jsonify({"Message": "Student added successfully", "rows_affected": rows_affected}), 201)
+
 
 @app.route("/itstudent/<int:id>", methods=["PUT"])
 def update_itstudent(id):
@@ -119,10 +149,14 @@ def delete_itstudent(id):
     cur.close()
     return make_response(jsonify({"message": "student deleted successfully", "rows_affected": rows_affected}), 200)
 
+
 @app.route("/itstudent/format", methods= ["GET"])
 def get_params():
     fmt = request.args.get('id')
     foo = request.args.get('bbbb')
     return make_response(jsonify({"format": fmt}))
+
+
+
 if __name__ == "__main__":
     app.run(debug=True) 
