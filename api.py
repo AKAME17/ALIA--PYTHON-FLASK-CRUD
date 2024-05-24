@@ -96,5 +96,15 @@ def update_itstudent(id):
 
     return make_response(jsonify({"Message": "itstudent added successfully", "rows_affected": rows_affected}), 201)
 
+
+@app.route("/itstudent/<int:id>", methods=["DELETE"])
+def delete_itstudent(id):
+    cur = mysql.connection.cursor()
+    cur.execute("""DELETE FROM itstudent where studentnumber = %s""", (id,))
+    mysql.connection.commit()
+    rows_affected = cur.rowcount
+    cur.close()
+    return make_response(jsonify({"message": "actor deleted successfully", "rows_affected": rows_affected}), 200)
+    
 if __name__ == "__main__":
     app.run(debug=True) 
