@@ -75,12 +75,14 @@ def output_format(data, format):
 # GET student endpoints
 
 @app.route("/itstudent", methods=["GET"])
+@auth.login_required
 def get_itstudent():
     format = request.args.get('format', 'json')
     data = data_fetch("""select * from itstudent""")
     return output_format(data, format)
 
 @app.route("/itstudent/<int:id>", methods=["GET"])
+@auth.login_required
 def get_itstudent_by_(id):
     format = request.args.get('format', 'json')
     data = data_fetch("""select * from itstudent where studentnumber = {}""".format(id))
@@ -90,6 +92,7 @@ def get_itstudent_by_(id):
 
 #get courses  y student endpoint 
 @app.route("/itstudent/<int:id>/courses", methods=["GET"])
+@auth.login_required
 def get_course_by_itstudent (id):
 
     data = data_fetch("""
@@ -104,6 +107,7 @@ where itstudent.studentnumber = {}""".format(id))
 
 #post student endpoint 
 @app.route("/itstudent", methods=["POST"]) 
+@auth.login_required
 def add_itstudent():
     cur = mysql.connection.cursor()
     info = request.get_json()
@@ -125,6 +129,7 @@ def add_itstudent():
 
 #put student endpoint 
 @app.route("/itstudent/<int:id>", methods=["PUT"])
+@auth.login_required
 def update_itstudent(id):
     cur = mysql.connection.cursor()
     info = request.get_json()
@@ -145,6 +150,7 @@ def update_itstudent(id):
 
 #Delete student endpoint 
 @app.route("/itstudent/<int:id>", methods=["DELETE"])
+@auth.login_required
 def delete_itstudent(id):
     cur = mysql.connection.cursor()
     cur.execute("""DELETE FROM itstudent where studentnumber = %s""", (id,))
